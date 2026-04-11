@@ -1,0 +1,127 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Contenedor general */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Barra lateral */
+.sidebar {
+    width: 220px;
+    background: #2c3e50;
+    color: #fff;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #ecf0f1;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a {
+    color: #ecf0f1;
+    text-decoration: none;
+    font-size: 15px;
+    padding: 10px;
+    display: block;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background: #34495e;
+}
+
+/* Área de contenido */
+.content {
+    flex: 1;
+    padding: 30px;
+    background: #fff;
+}
+
+/* Formularios */
+.form {
+    margin-bottom: 20px;
+    background: #fafafa;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.form input, 
+.form button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form button {
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background .3s;
+}
+
+.form button:hover {
+    background: #219150;
+}
+
+/* Tablas */
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fafafa;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.tabla th, .tabla td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.tabla th {
+    background: #2c3e50;
+    color: #fff;
+}
+
+.tabla tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.tabla a {
+    color: #2980b9;
+    text-decoration: none;
+    margin: 0 5px;
+}
+
+.tabla a:hover {
+    text-decoration: underline;
+}

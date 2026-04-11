@@ -1,0 +1,5 @@
+ID,Tipo,Marca,Modelo,Año,Color,Precio,Descripción
+2,Carro,chevrolet,2005,,,32000000.00,"buen estado"
+3,Carro,chevrolet,2006,,,8677777.00,
+4,Moto,"Pulsar ns200",2024,,,7000000.00,"moto con 0 km en buen estado"
+5,Moto,"Pulsar ns200",2011,,,10000000.00,"buen estado"

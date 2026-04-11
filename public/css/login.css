@@ -1,0 +1,90 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Barra superior */
+.top-bar {
+    width: 100%;
+    background-color: #002060; /* Azul oscuro */
+    padding: 15px 40px;
+    color: #fff;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Contenedor principal */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 50px;
+    gap: 80px;
+}
+
+/* Texto */
+.login-text h2 {
+    font-size: 1.8em;
+    color: #222;
+    line-height: 1.4;
+}
+
+/* Formulario */
+.login-form {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    width: 350px;
+}
+
+.login-form label {
+    display: block;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 1em;
+}
+
+/* Botón */
+.login-form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #1b9aaa; /* Azul vibrante */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.login-form button:hover {
+    background-color: #14808e;
+}
+
+/* Link de crear cuenta */
+.crear-cuenta {
+    display: block;
+    margin-top: 15px;
+    text-align: center;
+    font-size: 0.9em;
+    color: #1b9aaa;
+    text-decoration: none;
+}
+
+.crear-cuenta:hover {
+    text-decoration: underline;
+}
