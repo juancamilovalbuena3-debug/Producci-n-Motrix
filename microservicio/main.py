@@ -38,7 +38,6 @@ async def get_pool(app):
         host='127.0.0.1', port=3306,
         user='root', password='', db='hr', autocommit=True
     )
-    # Crear tabla si no existe
     async with app['db'].acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
@@ -69,7 +68,6 @@ async def get_producto(request):
         return web.Response(text=json.dumps({"error": "No encontrado"}), content_type='application/json', status=404)
     return web.Response(text=json.dumps(carro, ensure_ascii=False), content_type='application/json')
 
-# ── CORREGIDO: guarda en MySQL en vez de lista en memoria ──
 async def comprar_producto(request):
     carro_id = int(request.match_info['id'])
     carro = carros.get(carro_id)
@@ -102,6 +100,61 @@ async def comprar_producto(request):
         "fecha":      ahora.strftime("%Y-%m-%d %H:%M:%S"),
     }, ensure_ascii=False), content_type='application/json')
 
+# ── Crear carro desde Laravel ──────────────────────────
+async def crear_producto(request):
+    try:
+        data = await request.json()
+    except Exception:
+        return web.Response(text=json.dumps({"error": "JSON inválido"}), content_type='application/json', status=400)
+
+    nuevo_id = max(carros.keys(), default=0) + 1
+
+    nuevo_carro = {
+        "id":          nuevo_id,
+        "nombre":      data.get('nombre', f"{data.get('marca', '')} {data.get('modelo', '')}").strip(),
+        "precio":      float(data.get('precio', 0)),
+        "transmision": "Automatico",
+        "combustible": data.get('combustible', 'Gasolina'),
+        "imagen":      data.get('imagen', 'images/default.jpg'),
+        "anio":        int(data.get('modelo', datetime.now().year)) if str(data.get('modelo', '')).isdigit() else datetime.now().year,
+        "kilometraje": 0,
+        "colores":     data.get('colores', ['Blanco', 'Negro']),
+        "garantia":    data.get('garantia', '1 año'),
+        "seguridad":   data.get('seguridad', 'ABS'),
+        "descripcion": data.get('descripcion', ''),
+        "id_laravel":  data.get('id_laravel'),
+    }
+
+    carros[nuevo_id] = nuevo_carro
+
+    return web.Response(
+        text=json.dumps({"mensaje": "Carro creado correctamente", "id": nuevo_id, "vehiculo": nuevo_carro}, ensure_ascii=False),
+        content_type='application/json',
+        status=201
+    )
+
+# ── Eliminar carro desde Laravel ───────────────────────
+async def eliminar_producto(request):
+    vehiculo_id = int(request.match_info['id'])
+
+    carro_key = None
+    for key, carro in carros.items():
+        if carro.get('id_laravel') == vehiculo_id or key == vehiculo_id:
+            carro_key = key
+            break
+
+    if carro_key is None:
+        return web.Response(
+            text=json.dumps({"error": "Carro no encontrado"}),
+            content_type='application/json', status=404
+        )
+
+    del carros[carro_key]
+    return web.Response(
+        text=json.dumps({"mensaje": "Carro eliminado correctamente"}),
+        content_type='application/json'
+    )
+
 # ── Motos ──────────────────────────────────────────────
 async def get_motos(request):
     return web.Response(text=json.dumps(list(motos.values()), ensure_ascii=False), content_type='application/json')
@@ -113,7 +166,6 @@ async def get_moto(request):
         return web.Response(text=json.dumps({"error": "No encontrado"}), content_type='application/json', status=404)
     return web.Response(text=json.dumps(moto, ensure_ascii=False), content_type='application/json')
 
-# ── CORREGIDO: guarda en MySQL en vez de lista en memoria ──
 async def comprar_moto(request):
     moto_id = int(request.match_info['id'])
     moto = motos.get(moto_id)
@@ -146,14 +198,68 @@ async def comprar_moto(request):
         "fecha":      ahora.strftime("%Y-%m-%d %H:%M:%S"),
     }, ensure_ascii=False), content_type='application/json')
 
-# ── CORREGIDO: lee desde MySQL, persiste tras reinicio ──
+# ── Crear moto desde Laravel ───────────────────────────
+async def crear_moto(request):
+    try:
+        data = await request.json()
+    except Exception:
+        return web.Response(text=json.dumps({"error": "JSON inválido"}), content_type='application/json', status=400)
+
+    nuevo_id = max(motos.keys(), default=0) + 1
+
+    nueva_moto = {
+        "id":          nuevo_id,
+        "nombre":      data.get('nombre', f"{data.get('marca', '')} {data.get('modelo', '')}").strip(),
+        "precio":      float(data.get('precio', 0)),
+        "transmision": "Manual",
+        "combustible": data.get('combustible', 'Gasolina'),
+        "imagen":      data.get('imagen', 'images/default.jpg'),
+        "anio":        int(data.get('modelo', datetime.now().year)) if str(data.get('modelo', '')).isdigit() else datetime.now().year,
+        "kilometraje": 0,
+        "colores":     data.get('colores', ['Blanco', 'Negro', 'Gris', 'Rojo', 'Azul', 'Plata', 'Verde']),
+        "garantia":    data.get('garantia', '1 año'),
+        "seguridad":   data.get('seguridad', 'ABS'),
+        "descripcion": data.get('descripcion', ''),
+        "id_laravel":  data.get('id_laravel'),
+    }
+
+    motos[nuevo_id] = nueva_moto
+
+    return web.Response(
+        text=json.dumps({"mensaje": "Moto creada correctamente", "id": nuevo_id, "vehiculo": nueva_moto}, ensure_ascii=False),
+        content_type='application/json',
+        status=201
+    )
+
+# ── Eliminar moto desde Laravel ────────────────────────
+async def eliminar_moto(request):
+    vehiculo_id = int(request.match_info['id'])
+
+    moto_key = None
+    for key, moto in motos.items():
+        if moto.get('id_laravel') == vehiculo_id or key == vehiculo_id:
+            moto_key = key
+            break
+
+    if moto_key is None:
+        return web.Response(
+            text=json.dumps({"error": "Moto no encontrada"}),
+            content_type='application/json', status=404
+        )
+
+    del motos[moto_key]
+    return web.Response(
+        text=json.dumps({"mensaje": "Moto eliminada correctamente"}),
+        content_type='application/json'
+    )
+
+# ── Reporte ────────────────────────────────────────────
 async def get_reporte(request):
     async with request.app['db'].acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("SELECT * FROM compras_python ORDER BY fecha DESC")
             compras = await cur.fetchall()
 
-    # Convertir datetime de MySQL a string
     listado = []
     for c in compras:
         listado.append({
@@ -205,7 +311,6 @@ async def get_reporte(request):
     }
     return web.Response(text=json.dumps(reporte, ensure_ascii=False), content_type='application/json')
 
-# ── NUEVO: eliminar compra (llamado desde Laravel) ──────
 async def eliminar_compra(request):
     compra_id = int(request.match_info['id'])
     async with request.app['db'].acquire() as conn:
@@ -440,7 +545,7 @@ async def check_role(request):
 
     return web.Response(text=json.dumps({"role": user["role"]}), content_type='application/json', status=200)
 
-# ── NUEVO: Validación de Empleados ─────────────────────
+# ── Validación de Empleados ────────────────────────────
 async def validar_empleado(request):
     try:
         data = await request.json()
@@ -452,8 +557,7 @@ async def validar_empleado(request):
 
     errores = {}
 
-    # Validar nombre
-    nombre = str(data.get('nombre', '')).strip()
+    nombre = (data.get('nombre') or '').strip()
     if not nombre:
         errores['nombre'] = 'El nombre es obligatorio.'
     elif len(nombre) < 3:
@@ -463,8 +567,7 @@ async def validar_empleado(request):
     elif not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$', nombre):
         errores['nombre'] = 'El nombre solo puede contener letras y espacios.'
 
-    # Validar puesto
-    puesto = str(data.get('puesto', '')).strip()
+    puesto = (data.get('puesto') or '').strip()
     if not puesto:
         errores['puesto'] = 'El puesto es obligatorio.'
     elif len(puesto) < 3:
@@ -474,7 +577,6 @@ async def validar_empleado(request):
     elif not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$', puesto):
         errores['puesto'] = 'El puesto solo puede contener letras y espacios.'
 
-    # Validar salario
     salario_raw = data.get('salario', '')
     try:
         salario = float(str(salario_raw).strip())
@@ -487,7 +589,6 @@ async def validar_empleado(request):
     except (ValueError, TypeError):
         errores['salario'] = 'El salario debe ser un número válido.'
 
-    # Validar email
     email = str(data.get('email', '')).strip()
     if not email:
         errores['email'] = 'El correo electrónico es obligatorio.'
@@ -496,11 +597,10 @@ async def validar_empleado(request):
     elif len(email) > 150:
         errores['email'] = 'El correo electrónico no puede superar los 150 caracteres.'
     else:
-        # Verificar que el email no esté ya registrado en empleados
         try:
             async with request.app['db'].acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
-                    empleado_id = data.get('id')  # Si viene id, es edición
+                    empleado_id = data.get('id')
                     if empleado_id:
                         await cur.execute(
                             "SELECT id FROM empleados WHERE email = %s AND id != %s",
@@ -528,7 +628,7 @@ async def validar_empleado(request):
         content_type='application/json', status=200
     )
 
-# ── NUEVO: Validación de Vehículos ─────────────────────
+# ── Validación de Vehículos ────────────────────────────
 async def validar_vehiculo(request):
     try:
         data = await request.json()
@@ -541,7 +641,6 @@ async def validar_vehiculo(request):
     errores = {}
     anio_actual = datetime.now().year
 
-    # Validar tipo
     tipo = str(data.get('tipo', '')).strip().lower()
     tipos_validos = ['carro', 'moto', 'camioneta', 'camión', 'bus']
     if not tipo:
@@ -549,7 +648,6 @@ async def validar_vehiculo(request):
     elif tipo not in tipos_validos:
         errores['tipo'] = 'El tipo de vehículo no es válido. Solo se permiten: Carro y Moto.'
 
-    # Validar marca
     marca = str(data.get('marca', '')).strip()
     if not marca:
         errores['marca'] = 'La marca es obligatoria.'
@@ -560,7 +658,6 @@ async def validar_vehiculo(request):
     elif not re.match(r'^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\-]+$', marca):
         errores['marca'] = 'La marca solo puede contener letras, números, espacios y guiones.'
 
-    # Validar modelo
     modelo = str(data.get('modelo', '')).strip()
     if not modelo:
         errores['modelo'] = 'El modelo es obligatorio.'
@@ -569,7 +666,6 @@ async def validar_vehiculo(request):
     elif len(modelo) > 80:
         errores['modelo'] = 'El modelo no puede superar los 80 caracteres.'
 
-    # Validar precio
     precio_raw = data.get('precio', '')
     try:
         precio = float(str(precio_raw).strip())
@@ -582,7 +678,6 @@ async def validar_vehiculo(request):
     except (ValueError, TypeError):
         errores['precio'] = 'El precio debe ser un número válido.'
 
-    # Validar descripción (opcional pero si viene, validar longitud)
     descripcion = str(data.get('descripcion', '')).strip()
     if descripcion and len(descripcion) > 500:
         errores['descripcion'] = 'La descripción no puede superar los 500 caracteres.'
@@ -600,34 +695,41 @@ async def validar_vehiculo(request):
 
 # ── Rutas ──────────────────────────────────────────────
 app = web.Application(middlewares=[cors_middleware])
-app.router.add_get('/productos',                  get_productos)
-app.router.add_get('/producto/{id}',              get_producto)
-app.router.add_post('/comprar/{id}',              comprar_producto)
-app.router.add_options('/comprar/{id}',           comprar_producto)
-app.router.add_get('/motos',                      get_motos)
-app.router.add_get('/moto/{id}',                  get_moto)
-app.router.add_post('/comprar-moto/{id}',         comprar_moto)
-app.router.add_options('/comprar-moto/{id}',      comprar_moto)
-app.router.add_get('/reporte',                    get_reporte)
-app.router.add_delete('/compras/{id}',            eliminar_compra)
-app.router.add_options('/compras/{id}',           eliminar_compra)
-app.router.add_get('/configuracion/perfil',       get_perfil)
-app.router.add_put('/configuracion/perfil',       editar_perfil)
-app.router.add_options('/configuracion/perfil',   editar_perfil)
-app.router.add_get('/configuracion/preferencias',     get_preferencias)
-app.router.add_put('/configuracion/preferencias',     actualizar_preferencias)
-app.router.add_options('/configuracion/preferencias', actualizar_preferencias)
-app.router.add_get('/empleados/export/pdf',       export_empleados_pdf)
-app.router.add_get('/empleados/export/csv',       export_empleados_csv)
-app.router.add_get('/vehiculos/export/pdf',       export_vehiculos_pdf)
-app.router.add_get('/vehiculos/export/csv',       export_vehiculos_csv)
-app.router.add_post('/check-role',                check_role)
-app.router.add_options('/check-role',             check_role)
-# ── Nuevas rutas de validación ─────────────────────────
-app.router.add_post('/validar/empleado',          validar_empleado)
-app.router.add_options('/validar/empleado',       validar_empleado)
-app.router.add_post('/validar/vehiculo',          validar_vehiculo)
-app.router.add_options('/validar/vehiculo',       validar_vehiculo)
+app.router.add_get('/productos',                   get_productos)
+app.router.add_get('/producto/{id}',               get_producto)
+app.router.add_post('/comprar/{id}',               comprar_producto)
+app.router.add_options('/comprar/{id}',            comprar_producto)
+app.router.add_post('/productos/crear',            crear_producto)
+app.router.add_options('/productos/crear',         crear_producto)
+app.router.add_delete('/productos/eliminar/{id}',  eliminar_producto)
+app.router.add_options('/productos/eliminar/{id}', eliminar_producto)
+app.router.add_get('/motos',                       get_motos)
+app.router.add_get('/moto/{id}',                   get_moto)
+app.router.add_post('/comprar-moto/{id}',          comprar_moto)
+app.router.add_options('/comprar-moto/{id}',       comprar_moto)
+app.router.add_post('/motos/crear',                crear_moto)
+app.router.add_options('/motos/crear',             crear_moto)
+app.router.add_delete('/motos/eliminar/{id}',      eliminar_moto)
+app.router.add_options('/motos/eliminar/{id}',     eliminar_moto)
+app.router.add_get('/reporte',                     get_reporte)
+app.router.add_delete('/compras/{id}',             eliminar_compra)
+app.router.add_options('/compras/{id}',            eliminar_compra)
+app.router.add_get('/configuracion/perfil',        get_perfil)
+app.router.add_put('/configuracion/perfil',        editar_perfil)
+app.router.add_options('/configuracion/perfil',    editar_perfil)
+app.router.add_get('/configuracion/preferencias',      get_preferencias)
+app.router.add_put('/configuracion/preferencias',      actualizar_preferencias)
+app.router.add_options('/configuracion/preferencias',  actualizar_preferencias)
+app.router.add_get('/empleados/export/pdf',        export_empleados_pdf)
+app.router.add_get('/empleados/export/csv',        export_empleados_csv)
+app.router.add_get('/vehiculos/export/pdf',        export_vehiculos_pdf)
+app.router.add_get('/vehiculos/export/csv',        export_vehiculos_csv)
+app.router.add_post('/check-role',                 check_role)
+app.router.add_options('/check-role',              check_role)
+app.router.add_post('/validar/empleado',           validar_empleado)
+app.router.add_options('/validar/empleado',        validar_empleado)
+app.router.add_post('/validar/vehiculo',           validar_vehiculo)
+app.router.add_options('/validar/vehiculo',        validar_vehiculo)
 
 app.on_startup.append(get_pool)
 app.on_cleanup.append(close_pool)

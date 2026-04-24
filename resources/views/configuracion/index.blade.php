@@ -6,19 +6,48 @@
     </x-slot>
 
     <div class="p-6 space-y-6">
-        
+
+        {{-- Cambio Rápido de Estilo --}}
         <div class="border p-4 rounded bg-white shadow">
             <h3 class="font-bold text-sm text-gray-500 uppercase mb-3">Cambio Rápido de Estilo</h3>
-            <div class="flex flex-wrap gap-2">
-                <button onclick="guardarPreferenciaRapida('claro')" class="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-800 rounded-full hover:bg-orange-200 transition">
+            <div class="flex flex-wrap gap-3">
+
+                <button onclick="aplicarTema('claro')"
+                    style="font-family:'Rajdhani',sans-serif;letter-spacing:.06em;font-size:13px;"
+                    class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200 transition">
                     ☀️ Claro
                 </button>
-                <button onclick="guardarPreferenciaRapida('oscuro_total')" class="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-900 transition">
+
+                <button onclick="aplicarTema('oscuro_total')"
+                    style="font-family:'Rajdhani',sans-serif;letter-spacing:.06em;font-size:13px;"
+                    class="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white border border-gray-600 hover:bg-gray-900 transition">
                     🌙 Oscuro
                 </button>
-                <button onclick="guardarPreferenciaRapida('profesional')" class="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full hover:bg-indigo-200 transition">
+
+                <button onclick="aplicarTema('profesional')"
+                    style="font-family:'Rajdhani',sans-serif;letter-spacing:.06em;font-size:13px;"
+                    class="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-800 border border-indigo-300 hover:bg-indigo-200 transition">
                     💼 Profesional
                 </button>
+
+                <button onclick="aplicarTema('futurista')"
+                    style="font-family:'Orbitron',monospace;letter-spacing:.1em;font-size:11px;background:rgba(0,20,50,.9);color:#00b4ff;border:1px solid rgba(0,180,255,.4);"
+                    class="flex items-center gap-2 px-4 py-2 transition hover:opacity-80">
+                    ◈ FUTURISTA
+                </button>
+
+                <button onclick="aplicarTema('rosa')"
+                    style="font-family:'Orbitron',monospace;letter-spacing:.1em;font-size:11px;background:rgba(35,5,40,.9);color:#ff64c8;border:1px solid rgba(255,100,200,.4);"
+                    class="flex items-center gap-2 px-4 py-2 transition hover:opacity-80">
+                    ◈ ROSA
+                </button>
+
+                <button onclick="aplicarTema('blanco')"
+                    style="font-family:'Orbitron',monospace;letter-spacing:.1em;font-size:11px;background:#f0f4fa;color:#0064c8;border:1px solid rgba(0,100,200,.3);"
+                    class="flex items-center gap-2 px-4 py-2 transition hover:opacity-80">
+                    ◈ BLANCO
+                </button>
+
             </div>
         </div>
 
@@ -72,14 +101,6 @@
             <h3 class="text-lg font-bold mb-4 text-gray-800">Actualizar Preferencias</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Tema</label>
-                    <select id="pref_tema" class="mt-1 block w-full border rounded px-3 py-2 bg-white text-gray-900">
-                        <option value="claro">☀️ Claro</option>
-                        <option value="oscuro_total">🌙 Oscuro</option>
-                        <option value="profesional">💼 Profesional</option>
-                    </select>
-                </div>
-                <div>
                     <label class="block text-sm font-medium text-gray-700">Ordenar vehículos por</label>
                     <select id="pref_orden" class="mt-1 block w-full border rounded px-3 py-2 bg-white text-gray-900">
                         <option value="precio_asc">💰 Precio menor primero</option>
@@ -107,43 +128,29 @@
         function aplicarTema(tema) {
             const contenedor = document.getElementById('contenedor-principal');
             if (contenedor) {
-                contenedor.classList.remove('tema-oscuro', 'tema-profesional');
+                contenedor.classList.remove(
+                    'tema-oscuro','tema-profesional',
+                    'tema-futurista','tema-rosa','tema-blanco'
+                );
             }
             document.documentElement.classList.remove('dark');
 
-            if (tema === 'oscuro_total') {
+            if (tema === 'futurista') {
+                if (contenedor) contenedor.classList.add('tema-futurista');
+                document.documentElement.classList.add('dark');
+            } else if (tema === 'rosa') {
+                if (contenedor) contenedor.classList.add('tema-rosa');
+                document.documentElement.classList.add('dark');
+            } else if (tema === 'blanco') {
+                if (contenedor) contenedor.classList.add('tema-blanco');
+            } else if (tema === 'oscuro_total') {
                 if (contenedor) contenedor.classList.add('tema-oscuro');
                 document.documentElement.classList.add('dark');
-            } else if (tema === 'profesional' && contenedor) {
-                contenedor.classList.add('tema-profesional');
+            } else if (tema === 'profesional') {
+                if (contenedor) contenedor.classList.add('tema-profesional');
             }
+
             localStorage.setItem('tema', tema);
-        }
-
-        // Nueva función para cambiar tema con un solo clic
-        async function guardarPreferenciaRapida(nuevoTema) {
-            aplicarTema(nuevoTema);
-            try {
-                // Obtenemos el resto de preferencias actuales para no sobreescribirlas con valores vacíos
-                const resGet = await fetch(`${API}/configuracion/preferencias?user_id=${USER_ID}`);
-                const dataActual = await resGet.json();
-
-                const preferencias = {
-                    tema: nuevoTema,
-                    orden: dataActual.orden || 'precio_asc',
-                    notificaciones: dataActual.notificaciones !== undefined ? dataActual.notificaciones : true,
-                };
-
-                await fetch(`${API}/configuracion/preferencias`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: USER_ID, preferencias })
-                });
-                
-                console.log("Tema actualizado: " + nuevoTema);
-            } catch(e) {
-                console.error("Error al guardar preferencia rápida");
-            }
         }
 
         // ── Perfil ──────────────────────────────────────
@@ -189,7 +196,6 @@
             try {
                 const res  = await fetch(`${API}/configuracion/preferencias?user_id=${USER_ID}`);
                 const data = await res.json();
-                if (data.tema)  document.getElementById('pref_tema').value  = data.tema;
                 if (data.orden) document.getElementById('pref_orden').value = data.orden;
                 if (data.notificaciones !== undefined)
                     document.getElementById('pref_notificaciones').checked = data.notificaciones;
@@ -205,10 +211,8 @@
         }
 
         async function guardarPreferencias() {
-            const tema  = document.getElementById('pref_tema').value;
             const orden = document.getElementById('pref_orden').value;
             const preferencias = {
-                tema,
                 orden,
                 notificaciones: document.getElementById('pref_notificaciones').checked,
             };
@@ -222,7 +226,6 @@
 
             if (res.ok) {
                 localStorage.setItem('orden_vehiculos', orden);
-                aplicarTema(tema);
                 setTimeout(() => location.reload(), 800);
             } else {
                 const msg = document.getElementById('pref_msg');

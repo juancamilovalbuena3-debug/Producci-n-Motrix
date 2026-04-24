@@ -271,6 +271,7 @@ class VehiculoController extends Controller
         }
         // ────────────────────────────────────────────────────
 
+        // ── Guardar en BD Laravel ────────────────────────────
         $vehiculo = new Vehiculo($request->only(['tipo', 'marca', 'modelo', 'precio', 'descripcion']));
 
         if ($request->hasFile('imagen')) {
@@ -281,8 +282,38 @@ class VehiculoController extends Controller
         }
 
         $vehiculo->save();
+        // ────────────────────────────────────────────────────
 
-        return redirect()->route('empleados.index', ['tab' => 'vehiculos'])->with('success', 'Vehículo publicado con éxito 🚗🏍️');
+        // ── 🐍 Sincronizar con microservicio Python ──────────
+        try {
+            $tipo = strtolower($request->tipo);
+
+            $endpoint = ($tipo === 'moto') ? '/motos/crear' : '/productos/crear';
+
+            $payload = [
+                'nombre'      => $request->marca . ' ' . $request->modelo,
+                'marca'       => $request->marca,
+                'modelo'      => $request->modelo,
+                'precio'      => (float) $request->precio,
+                'descripcion' => $request->descripcion ?? '',
+                'tipo'        => $tipo,
+                'imagen'      => $vehiculo->imagen
+                                    ? 'images/' . $vehiculo->imagen
+                                    : 'images/default.jpg',
+                'transmision' => 'Automático',
+                'combustible' => 'Gasolina',
+                'id_laravel'  => $vehiculo->id,
+            ];
+
+            Http::timeout(5)->post("{$this->pythonUrl}{$endpoint}", $payload);
+
+        } catch (\Exception $e) {
+            // Si Python falla, el vehículo igual queda en BD Laravel
+        }
+        // ────────────────────────────────────────────────────
+
+        return redirect()->route('empleados.index', ['tab' => 'vehiculos'])
+            ->with('success', 'Vehículo publicado con éxito 🚗🏍️');
     }
 
     public function edit($id)
@@ -359,11 +390,27 @@ class VehiculoController extends Controller
     public function destroy($id)
     {
         $vehiculo = Vehiculo::findOrFail($id);
+
+        // Eliminar imagen del storage
         if ($vehiculo->imagen && Storage::exists('public/vehiculos/' . $vehiculo->imagen)) {
             Storage::delete('public/vehiculos/' . $vehiculo->imagen);
         }
+
+        // ── 🐍 Sincronizar eliminación con microservicio Python ──
+        try {
+            $tipo     = strtolower($vehiculo->tipo);
+            $endpoint = ($tipo === 'moto') ? '/motos/eliminar' : '/productos/eliminar';
+
+            Http::timeout(5)->delete("{$this->pythonUrl}{$endpoint}/{$id}");
+        } catch (\Exception $e) {
+            // Si Python falla, igual eliminamos de Laravel
+        }
+        // ────────────────────────────────────────────────────────
+
         $vehiculo->delete();
-        return redirect()->route('empleados.index', ['tab' => 'vehiculos'])->with('success', 'Vehículo eliminado correctamente.');
+
+        return redirect()->route('empleados.index', ['tab' => 'vehiculos'])
+            ->with('success', 'Vehículo eliminado correctamente.');
     }
 
     public function index(Request $request)
@@ -371,9 +418,6 @@ class VehiculoController extends Controller
         return redirect()->route('empleados.index', $request->only(['busqueda', 'tipo']));
     }
 
-    /**
-     * Exportar vehículos en PDF — via microservicio Python
-     */
     public function exportPdf(Request $request)
     {
         try {
@@ -398,9 +442,6 @@ class VehiculoController extends Controller
         }
     }
 
-    /**
-     * Exportar vehículos en CSV — via microservicio Python
-     */
     public function exportCsv(Request $request)
     {
         try {

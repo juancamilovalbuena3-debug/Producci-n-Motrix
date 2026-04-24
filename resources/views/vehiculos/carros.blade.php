@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800">
-            {{ __('Carros disponibles 🚗') }}
+            {{ __('Carros disponibles') }}
         </h2>
     </x-slot>
     <div class="p-6">
@@ -18,6 +18,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-carros">
             @forelse($carros as $carro)
+            @php
+                $transmision = $carro['transmision'] ?? '';
+                $transmisionNormalizada = match(strtolower(trim($transmision))) {
+                    'automatico', 'automático', 'automatic' => 'Automático',
+                    'manual'                                => 'Manual',
+                    default                                 => $transmision,
+                };
+            @endphp
             <div class="border rounded-lg shadow-md p-4 bg-white"
                  data-precio="{{ $carro['precio'] }}"
                  data-nombre="{{ $carro['nombre'] }}">
@@ -28,7 +36,7 @@
 
                 <h3 class="text-lg font-bold">{{ $carro['nombre'] }}</h3>
                 <p class="text-gray-600">Precio: ${{ number_format($carro['precio']) }}</p>
-                <p class="text-gray-500">{{ $carro['transmision'] }} · {{ $carro['combustible'] }}</p>
+                <p class="text-gray-500">{{ $transmisionNormalizada }} · {{ $carro['combustible'] }}</p>
 
                 <div class="mt-4 flex space-x-2">
                     <a href="{{ route('carros.detalle', $carro['id']) }}"

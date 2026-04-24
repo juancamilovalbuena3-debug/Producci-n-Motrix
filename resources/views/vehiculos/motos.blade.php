@@ -21,6 +21,16 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-motos">
             @php $motos = $motos ?? []; @endphp
             @forelse($motos as $moto)
+            @php
+                $t = strtolower(trim($moto['transmision'] ?? ''));
+                if (str_contains($t, 'auto')) {
+                    $transmisionNormalizada = 'Automático';
+                } elseif (str_contains($t, 'man')) {
+                    $transmisionNormalizada = 'Manual';
+                } else {
+                    $transmisionNormalizada = $moto['transmision'] ?? '';
+                }
+            @endphp
             <div class="border rounded-lg shadow-md p-4 bg-white"
                  data-precio="{{ $moto['precio'] }}"
                  data-nombre="{{ $moto['nombre'] }}">
@@ -31,7 +41,7 @@
 
                 <h3 class="text-lg font-bold">{{ $moto['nombre'] }}</h3>
                 <p class="text-gray-600">Precio: ${{ number_format($moto['precio']) }}</p>
-                <p class="text-gray-500">{{ $moto['transmision'] }} . {{ $moto['combustible'] }}</p>
+                <p class="text-gray-500">{{ $transmisionNormalizada }} · {{ $moto['combustible'] }}</p>
 
                 <div class="mt-4 flex space-x-2">
                     <a href="{{ route('motos.detalle', $moto['id']) }}"

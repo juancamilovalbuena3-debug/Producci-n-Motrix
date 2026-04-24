@@ -27,7 +27,6 @@ class EmpleadoController extends Controller
         if ($request->filled('busqueda')) {
             $busqueda = trim($request->busqueda);
 
-            // Búsqueda parcial (no exacta)
             $queryEmpleados->where(function ($q) use ($busqueda) {
                 $q->where('nombre', 'like', '%' . strtolower($busqueda) . '%')
                   ->orWhere('email', 'like', '%' . strtolower($busqueda) . '%');
@@ -87,7 +86,7 @@ class EmpleadoController extends Controller
             }
         } catch (\Exception $e) {
             // Si el microservicio no responde, usamos validación local de respaldo
-            $request->validate([
+            $validated = $request->validate([
                 'nombre'  => 'required|string|max:255',
                 'puesto'  => 'required|string|max:255',
                 'salario' => 'required|numeric|min:1',
@@ -106,12 +105,22 @@ class EmpleadoController extends Controller
                 'email.email'      => 'El correo electrónico no tiene un formato válido.',
                 'email.unique'     => 'Ya existe un empleado registrado con este correo electrónico.',
             ]);
+
+            Empleado::create($validated);
+
+            return redirect()->route('empleados.create')
+                             ->with('success', 'Empleado creado correctamente.');
         }
         // ────────────────────────────────────────────────────
 
-        Empleado::create($request->all());
+        Empleado::create([
+            'nombre'  => $request->nombre,
+            'puesto'  => $request->puesto,
+            'salario' => $request->salario,
+            'email'   => $request->email,
+        ]);
 
-        return redirect()->route('empleados.index')
+        return redirect()->route('empleados.create')
                          ->with('success', 'Empleado creado correctamente.');
     }
 
@@ -134,7 +143,7 @@ class EmpleadoController extends Controller
         // ── Validación vía microservicio Python ──────────────
         try {
             $respuesta = Http::timeout(5)->post("{$this->microservicio}/validar/empleado", [
-                'id'      => $empleado->id,  // Se pasa el id para que excluya el email propio
+                'id'      => $empleado->id,
                 'nombre'  => $request->nombre,
                 'puesto'  => $request->puesto,
                 'salario' => $request->salario,
@@ -150,7 +159,7 @@ class EmpleadoController extends Controller
             }
         } catch (\Exception $e) {
             // Si el microservicio no responde, validación local de respaldo
-            $request->validate([
+            $validated = $request->validate([
                 'nombre'  => 'required|string|max:255',
                 'puesto'  => 'required|string|max:255',
                 'salario' => 'required|numeric|min:1',
@@ -169,10 +178,20 @@ class EmpleadoController extends Controller
                 'email.email'      => 'El correo electrónico no tiene un formato válido.',
                 'email.unique'     => 'Ya existe un empleado registrado con este correo electrónico.',
             ]);
+
+            $empleado->update($validated);
+
+            return redirect()->route('empleados.index')
+                             ->with('success', 'Empleado actualizado correctamente.');
         }
         // ────────────────────────────────────────────────────
 
-        $empleado->update($request->all());
+        $empleado->update([
+            'nombre'  => $request->nombre,
+            'puesto'  => $request->puesto,
+            'salario' => $request->salario,
+            'email'   => $request->email,
+        ]);
 
         return redirect()->route('empleados.index')
                          ->with('success', 'Empleado actualizado correctamente.');
