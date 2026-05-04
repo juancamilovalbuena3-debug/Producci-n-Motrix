@@ -1,17 +1,17 @@
 services:
   - type: web
     name: motrix-python-service
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     plan: free
 
   - type: web
     name: motrix-laravel-app
-    env: php
+    runtime: php
+    plan: free
     buildCommand: composer install --no-dev --optimize-autoloader
     startCommand: php artisan migrate --force && apache2-foreground
-    plan: free
     envVars:
       - key: APP_KIND
         value: laravel
