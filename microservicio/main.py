@@ -53,9 +53,113 @@ async def get_pool(app):
                 )
             """)
 
+            # ── Tabla para persistir el catálogo de carros y motos ──
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS catalogo_vehiculos_python (
+                    id          INT AUTO_INCREMENT PRIMARY KEY,
+                    tipo        ENUM('carro','moto') NOT NULL,
+                    id_vehiculo INT          NOT NULL,
+                    datos       LONGTEXT     NOT NULL,
+                    updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY uq_tipo_id (tipo, id_vehiculo)
+                )
+            """)
+
+    # Al arrancar, restauramos el catálogo desde BD (si existe data guardada)
+    await restaurar_catalogo(app)
+
 async def close_pool(app):
     app['db'].close()
     await app['db'].wait_closed()
+
+# ── Persistencia del catálogo ──────────────────────────
+async def guardar_catalogo(app):
+    """Guarda el estado actual de carros y motos en la BD."""
+    async with app['db'].acquire() as conn:
+        async with conn.cursor() as cur:
+            # Guardamos carros
+            for id_v, datos in carros.items():
+                await cur.execute("""
+                    INSERT INTO catalogo_vehiculos_python (tipo, id_vehiculo, datos)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE datos = VALUES(datos), updated_at = CURRENT_TIMESTAMP
+                """, ('carro', id_v, json.dumps(datos, ensure_ascii=False)))
+
+            # Eliminamos carros que ya no existen en memoria
+            if carros:
+                ids_carros = ','.join(str(k) for k in carros.keys())
+                await cur.execute(
+                    f"DELETE FROM catalogo_vehiculos_python WHERE tipo='carro' AND id_vehiculo NOT IN ({ids_carros})"
+                )
+            else:
+                await cur.execute("DELETE FROM catalogo_vehiculos_python WHERE tipo='carro'")
+
+            # Guardamos motos
+            for id_v, datos in motos.items():
+                await cur.execute("""
+                    INSERT INTO catalogo_vehiculos_python (tipo, id_vehiculo, datos)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE datos = VALUES(datos), updated_at = CURRENT_TIMESTAMP
+                """, ('moto', id_v, json.dumps(datos, ensure_ascii=False)))
+
+            # Eliminamos motos que ya no existen en memoria
+            if motos:
+                ids_motos = ','.join(str(k) for k in motos.keys())
+                await cur.execute(
+                    f"DELETE FROM catalogo_vehiculos_python WHERE tipo='moto' AND id_vehiculo NOT IN ({ids_motos})"
+                )
+            else:
+                await cur.execute("DELETE FROM catalogo_vehiculos_python WHERE tipo='moto'")
+
+async def restaurar_catalogo(app):
+    """Al iniciar, carga desde BD el catálogo guardado (si existe)."""
+    async with app['db'].acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT tipo, id_vehiculo, datos FROM catalogo_vehiculos_python ORDER BY tipo, id_vehiculo")
+            rows = await cur.fetchall()
+
+    if not rows:
+        # No hay datos guardados, dejamos los valores por defecto en memoria
+        # Pero guardamos los datos por defecto en BD para la próxima vez
+        await guardar_catalogo(app)
+        return
+
+    carros_bd = {}
+    motos_bd  = {}
+    for row in rows:
+        datos = json.loads(row['datos'])
+        if row['tipo'] == 'carro':
+            carros_bd[row['id_vehiculo']] = datos
+        else:
+            motos_bd[row['id_vehiculo']] = datos
+
+    if carros_bd:
+        carros.clear()
+        carros.update(carros_bd)
+    if motos_bd:
+        motos.clear()
+        motos.update(motos_bd)
+
+    print(f"[Catálogo restaurado] Carros: {len(carros)} | Motos: {len(motos)}")
+
+# ── Logout ─────────────────────────────────────────────
+async def logout(request):
+    """
+    Llamar este endpoint al cerrar sesión desde Laravel/Frontend.
+    Persiste el catálogo de carros y motos en la BD.
+    """
+    try:
+        await guardar_catalogo(request.app)
+        return web.Response(
+            text=json.dumps({"mensaje": "Sesión cerrada. Catálogo guardado correctamente."}),
+            content_type='application/json'
+        )
+    except Exception as e:
+        return web.Response(
+            text=json.dumps({"error": f"Error al guardar el catálogo: {str(e)}"}),
+            content_type='application/json',
+            status=500
+        )
 
 # ── Carros ─────────────────────────────────────────────
 async def get_productos(request):
@@ -126,6 +230,9 @@ async def crear_producto(request):
     }
 
     carros[nuevo_id] = nuevo_carro
+    
+    # ✅ Guardamos automáticamente después de crear
+    await guardar_catalogo(request.app)
 
     return web.Response(
         text=json.dumps({"mensaje": "Carro creado correctamente", "id": nuevo_id, "vehiculo": nuevo_carro}, ensure_ascii=False),
@@ -150,6 +257,10 @@ async def eliminar_producto(request):
         )
 
     del carros[carro_key]
+    
+    # ✅ Guardamos automáticamente después de eliminar
+    await guardar_catalogo(request.app)
+    
     return web.Response(
         text=json.dumps({"mensaje": "Carro eliminado correctamente"}),
         content_type='application/json'
@@ -224,6 +335,9 @@ async def crear_moto(request):
     }
 
     motos[nuevo_id] = nueva_moto
+    
+    # ✅ Guardamos automáticamente después de crear
+    await guardar_catalogo(request.app)
 
     return web.Response(
         text=json.dumps({"mensaje": "Moto creada correctamente", "id": nuevo_id, "vehiculo": nueva_moto}, ensure_ascii=False),
@@ -248,6 +362,10 @@ async def eliminar_moto(request):
         )
 
     del motos[moto_key]
+    
+    # ✅ Guardamos automáticamente después de eliminar
+    await guardar_catalogo(request.app)
+    
     return web.Response(
         text=json.dumps({"mensaje": "Moto eliminada correctamente"}),
         content_type='application/json'
@@ -730,6 +848,10 @@ app.router.add_post('/validar/empleado',           validar_empleado)
 app.router.add_options('/validar/empleado',        validar_empleado)
 app.router.add_post('/validar/vehiculo',           validar_vehiculo)
 app.router.add_options('/validar/vehiculo',        validar_vehiculo)
+
+# ── Ruta de Logout (guarda catálogo en BD) ─────────────
+app.router.add_post('/logout',                     logout)
+app.router.add_options('/logout',                  logout)
 
 app.on_startup.append(get_pool)
 app.on_cleanup.append(close_pool)

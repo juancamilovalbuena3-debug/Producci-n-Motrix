@@ -1,0 +1,9 @@
+2026-04-29 23:00:31 [INFO] <module>:1133 - Microservicio Motrix iniciando en http://0.0.0.0:8080
+2026-04-29 23:00:31 [INFO] get_pool:255 - Pool de base de datos iniciado correctamente.
+2026-04-29 23:00:31 [INFO] restaurar_catalogo:358 - No hay catálogo guardado en BD. Se usan los valores por defecto.
+2026-04-29 23:00:31 [INFO] get_pool:290 - Autoguardado del catálogo cada 120s activado.
+2026-04-29 23:00:59 [WARNING] get_producto:449 - Carro no encontrado: id=6
+2026-04-29 23:01:01 [DEBUG] cache_set:84 - Caché guardado: carros_list
+2026-04-29 23:01:28 [INFO] guardar_catalogo:347 - Catálogo guardado → Carros: 5 | Motos: 5
+2026-04-29 23:01:28 [INFO] close_pool:303 - Catálogo guardado al apagar el servidor.
+2026-04-29 23:01:28 [INFO] close_pool:309 - Pool de base de datos cerrado.

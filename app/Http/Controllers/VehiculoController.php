@@ -77,6 +77,11 @@ class VehiculoController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('carros')->with('error', 'No se pudo conectar con el microservicio.');
         }
+
+        if (!$vehiculo || isset($vehiculo['error'])) {
+            return redirect()->route('carros')->with('error', 'Vehículo no encontrado.');
+        }
+
         return view('vehiculos.comprar', ['vehiculo' => $vehiculo, 'tipo' => 'carro']);
     }
 
@@ -88,6 +93,11 @@ class VehiculoController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('motos')->with('error', 'No se pudo conectar con el microservicio.');
         }
+
+        if (!$vehiculo || isset($vehiculo['error'])) {
+            return redirect()->route('motos')->with('error', 'Moto no encontrada.');
+        }
+
         return view('vehiculos.comprar', ['vehiculo' => $vehiculo, 'tipo' => 'moto']);
     }
 
@@ -227,7 +237,6 @@ class VehiculoController extends Controller
 
     public function store(Request $request)
     {
-        // ── Validación vía microservicio Python ──────────────
         try {
             $respuesta = Http::timeout(5)->post("{$this->pythonUrl}/validar/vehiculo", [
                 'tipo'        => $request->tipo,
@@ -252,26 +261,9 @@ class VehiculoController extends Controller
                 'precio'      => 'required|numeric|min:1000000',
                 'descripcion' => 'nullable|string|max:500',
                 'imagen'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ], [
-                'tipo.required'    => 'El tipo de vehículo es obligatorio.',
-                'marca.required'   => 'La marca es obligatoria.',
-                'marca.min'        => 'La marca debe tener al menos 2 caracteres.',
-                'marca.max'        => 'La marca no puede superar los 80 caracteres.',
-                'modelo.required'  => 'El modelo es obligatorio.',
-                'modelo.min'       => 'El modelo debe tener al menos 2 caracteres.',
-                'modelo.max'       => 'El modelo no puede superar los 80 caracteres.',
-                'precio.required'  => 'El precio es obligatorio.',
-                'precio.numeric'   => 'El precio debe ser un número válido.',
-                'precio.min'       => 'El precio mínimo permitido es de $1,000,000.',
-                'descripcion.max'  => 'La descripción no puede superar los 500 caracteres.',
-                'imagen.image'     => 'El archivo debe ser una imagen.',
-                'imagen.mimes'     => 'La imagen debe ser de tipo jpeg, png, jpg o gif.',
-                'imagen.max'       => 'La imagen no puede superar los 2MB.',
             ]);
         }
-        // ────────────────────────────────────────────────────
 
-        // ── Guardar en BD Laravel ────────────────────────────
         $vehiculo = new Vehiculo($request->only(['tipo', 'marca', 'modelo', 'precio', 'descripcion']));
 
         if ($request->hasFile('imagen')) {
@@ -282,12 +274,9 @@ class VehiculoController extends Controller
         }
 
         $vehiculo->save();
-        // ────────────────────────────────────────────────────
 
-        // ── 🐍 Sincronizar con microservicio Python ──────────
         try {
-            $tipo = strtolower($request->tipo);
-
+            $tipo     = strtolower($request->tipo);
             $endpoint = ($tipo === 'moto') ? '/motos/crear' : '/productos/crear';
 
             $payload = [
@@ -306,11 +295,9 @@ class VehiculoController extends Controller
             ];
 
             Http::timeout(5)->post("{$this->pythonUrl}{$endpoint}", $payload);
-
         } catch (\Exception $e) {
             // Si Python falla, el vehículo igual queda en BD Laravel
         }
-        // ────────────────────────────────────────────────────
 
         return redirect()->route('empleados.index', ['tab' => 'vehiculos'])
             ->with('success', 'Vehículo publicado con éxito 🚗🏍️');
@@ -326,7 +313,6 @@ class VehiculoController extends Controller
     {
         $vehiculo = Vehiculo::findOrFail($id);
 
-        // ── Validación vía microservicio Python ──────────────
         try {
             $respuesta = Http::timeout(5)->post("{$this->pythonUrl}/validar/vehiculo", [
                 'tipo'        => $request->tipo,
@@ -351,24 +337,8 @@ class VehiculoController extends Controller
                 'precio'      => 'required|numeric|min:1000000',
                 'descripcion' => 'nullable|string|max:500',
                 'imagen'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ], [
-                'tipo.required'    => 'El tipo de vehículo es obligatorio.',
-                'marca.required'   => 'La marca es obligatoria.',
-                'marca.min'        => 'La marca debe tener al menos 2 caracteres.',
-                'marca.max'        => 'La marca no puede superar los 80 caracteres.',
-                'modelo.required'  => 'El modelo es obligatorio.',
-                'modelo.min'       => 'El modelo debe tener al menos 2 caracteres.',
-                'modelo.max'       => 'El modelo no puede superar los 80 caracteres.',
-                'precio.required'  => 'El precio es obligatorio.',
-                'precio.numeric'   => 'El precio debe ser un número válido.',
-                'precio.min'       => 'El precio mínimo permitido es de $1,000,000.',
-                'descripcion.max'  => 'La descripción no puede superar los 500 caracteres.',
-                'imagen.image'     => 'El archivo debe ser una imagen.',
-                'imagen.mimes'     => 'La imagen debe ser de tipo jpeg, png, jpg o gif.',
-                'imagen.max'       => 'La imagen no puede superar los 2MB.',
             ]);
         }
-        // ────────────────────────────────────────────────────
 
         $vehiculo->fill($request->only(['tipo', 'marca', 'modelo', 'precio', 'descripcion']));
 
@@ -384,28 +354,25 @@ class VehiculoController extends Controller
 
         $vehiculo->save();
 
-        return redirect()->route('empleados.index', ['tab' => 'vehiculos'])->with('success', 'Vehículo actualizado correctamente.');
+        return redirect()->route('empleados.index', ['tab' => 'vehiculos'])
+            ->with('success', 'Vehículo actualizado correctamente.');
     }
 
     public function destroy($id)
     {
         $vehiculo = Vehiculo::findOrFail($id);
 
-        // Eliminar imagen del storage
         if ($vehiculo->imagen && Storage::exists('public/vehiculos/' . $vehiculo->imagen)) {
             Storage::delete('public/vehiculos/' . $vehiculo->imagen);
         }
 
-        // ── 🐍 Sincronizar eliminación con microservicio Python ──
         try {
             $tipo     = strtolower($vehiculo->tipo);
             $endpoint = ($tipo === 'moto') ? '/motos/eliminar' : '/productos/eliminar';
-
             Http::timeout(5)->delete("{$this->pythonUrl}{$endpoint}/{$id}");
         } catch (\Exception $e) {
             // Si Python falla, igual eliminamos de Laravel
         }
-        // ────────────────────────────────────────────────────────
 
         $vehiculo->delete();
 

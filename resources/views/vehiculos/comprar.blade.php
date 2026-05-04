@@ -1,57 +1,62 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">Comprar Vehículo</h2>
+        <h2 class="font-semibold text-2xl text-gray-800 tracking-tight">Comprar Vehículo</h2>
     </x-slot>
 
-    <div class="max-w-4xl mx-auto p-6 mt-6 space-y-6">
+    <div class="max-w-4xl mx-auto p-6 mt-6 space-y-8">
 
-        <div class="bg-white rounded-lg shadow-md p-8 border" style="font-family: 'Times New Roman', serif;">
+        <!-- Sección Declaración Jurada -->
+        <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200 transition-all hover:shadow-xl" style="font-family: 'Times New Roman', serif;">
             <div class="text-center mb-6">
                 <p class="text-sm text-gray-500"><span id="fecha-hoy"></span></p>
-                <h2 class="text-xl font-bold uppercase mt-2">Declaración Jurada de Medio de Pago</h2>
-                <p class="text-sm mt-1">Señores: <strong>SUPERINTENDENCIA NACIONAL DE LOS REGISTROS PÚBLICOS</strong></p>
-                <p class="text-sm">Registro de Propiedad Vehicular</p>
+                <h2 class="text-xl font-bold uppercase mt-2 text-gray-900">Declaración Jurada de Medio de Pago</h2>
+                <p class="text-sm mt-1 text-gray-700">Señores: <strong>SUPERINTENDENCIA NACIONAL DE LOS REGISTROS PÚBLICOS</strong></p>
+                <p class="text-sm text-gray-700">Registro de Propiedad Vehicular</p>
             </div>
-            <p class="text-sm mb-4">
+            <p class="text-sm mb-4 text-gray-800">
                 La empresa <strong>Motrix</strong>, en su calidad de empresa <strong>Vendedora</strong>,
                 y el comprador abajo indicado, declaramos la compra del vehículo:
             </p>
-            <table class="w-full border border-black text-sm mb-4">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="border border-black px-3 py-2 text-left">Vehículo</th>
-                        <th class="border border-black px-3 py-2 text-left">Fecha</th>
-                        <th class="border border-black px-3 py-2 text-left">Importe</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="border border-black px-3 py-2">{{ $vehiculo['nombre'] }}</td>
-                        <td class="border border-black px-3 py-2" id="fecha-tabla"></td>
-                        <td class="border border-black px-3 py-2">${{ number_format($vehiculo['precio']) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p class="text-sm font-bold uppercase mb-1">Forma de Cancelación:</p>
-            <p class="text-sm mb-4">La empresa compradora efectuará la cancelación mediante el siguiente medio de pago indicado abajo.</p>
-            <div class="flex gap-3 mt-4">
+            <div class="overflow-hidden rounded-lg border border-black mb-4">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-100 border-b border-black">
+                            <th class="border-r border-black px-4 py-3 text-left">Vehículo</th>
+                            <th class="border-r border-black px-4 py-3 text-left">Fecha</th>
+                            <th class="px-4 py-3 text-left">Importe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border-r border-black px-4 py-3 font-medium">{{ $vehiculo['nombre'] }}</td>
+                            <td class="border-r border-black px-4 py-3" id="fecha-tabla"></td>
+                            <td class="px-4 py-3 font-bold">${{ number_format($vehiculo['precio']) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-sm font-bold uppercase mb-1 text-gray-900">Forma de Cancelación:</p>
+            <p class="text-sm mb-6 text-gray-800">La empresa compradora efectuará la cancelación mediante el siguiente medio de pago indicado abajo.</p>
+            
+            <div class="flex flex-wrap gap-4 mt-4">
                 <button type="button" onclick="descargarPDF()"
-                        class="bg-white hover:bg-gray-100 text-black font-semibold px-6 py-2 rounded-lg shadow-md border border-gray-300 transition-all text-sm">
+                        class="bg-white hover:bg-gray-50 text-gray-800 font-semibold px-6 py-2.5 rounded-lg shadow-sm border border-gray-300 transition-all text-sm flex items-center gap-2 hover:shadow-md">
                     📄 Descargar PDF
                 </button>
                 <button type="button" onclick="descargarCSV()"
-                        class="bg-white hover:bg-gray-100 text-black font-semibold px-6 py-2 rounded-lg shadow-md border border-gray-300 transition-all text-sm">
+                        class="bg-white hover:bg-gray-50 text-gray-800 font-semibold px-6 py-2.5 rounded-lg shadow-sm border border-gray-300 transition-all text-sm flex items-center gap-2 hover:shadow-md">
                     📊 Descargar CSV
                 </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-8 border">
-            <h3 class="text-lg font-bold mb-6 text-gray-800">📋 Datos de la Compra</h3>
+        <!-- Formulario de Compra -->
+        <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+            <h3 class="text-xl font-bold mb-6 text-gray-800 border-b pb-3">📋 Datos de la Compra</h3>
 
             @if($errors->any())
-                <div class="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">
-                    <ul class="list-disc pl-4">
+                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm shadow-sm">
+                    <ul class="list-disc pl-4 space-y-1">
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -66,22 +71,32 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre completo</label>
                         <input type="text" name="nombre_comprador" id="inp_nombre" required
                                value="{{ auth()->user()->name }}"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de documento (CC/NIT)</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Número de documento (CC/NIT)</label>
                         <input type="text" name="documento" id="inp_doc" required placeholder="Ej: 1234567890"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm" />
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Color deseado</label>
-                        <select name="color" id="inp_color" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <option value="">Seleccione un color</option>
+                    <!-- Selector Visual de Color -->
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Color deseado</label>
+                        <div class="flex flex-wrap gap-3 mb-2">
+                            <button type="button" onclick="seleccionarColor('Blanco', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-300 shadow-sm bg-white transition-all hover:scale-110 focus:outline-none" title="Blanco"></button>
+                            <button type="button" onclick="seleccionarColor('Negro', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-400 shadow-sm bg-black transition-all hover:scale-110 focus:outline-none" title="Negro"></button>
+                            <button type="button" onclick="seleccionarColor('Gris', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-400 shadow-sm bg-gray-400 transition-all hover:scale-110 focus:outline-none" title="Gris"></button>
+                            <button type="button" onclick="seleccionarColor('Rojo', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-400 shadow-sm bg-red-600 transition-all hover:scale-110 focus:outline-none" title="Rojo"></button>
+                            <button type="button" onclick="seleccionarColor('Azul', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-400 shadow-sm bg-blue-600 transition-all hover:scale-110 focus:outline-none" title="Azul"></button>
+                            <button type="button" onclick="seleccionarColor('Plata', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-400 shadow-sm bg-slate-300 transition-all hover:scale-110 focus:outline-none" title="Plata"></button>
+                            <button type="button" onclick="seleccionarColor('Verde', this)" class="color-swatch w-8 h-8 rounded-full border border-gray-400 shadow-sm bg-green-600 transition-all hover:scale-110 focus:outline-none" title="Verde"></button>
+                        </div>
+                        <select name="color" id="inp_color" required class="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm transition-colors pointer-events-none text-gray-600">
+                            <option value="">Seleccione un color (usa los círculos arriba)</option>
                             <option value="Blanco">⬜ Blanco</option>
                             <option value="Negro">⬛ Negro</option>
                             <option value="Gris">🩶 Gris</option>
@@ -93,9 +108,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Método de pago</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Método de pago</label>
                         <select name="metodo_pago" id="metodo_pago" required
-                                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                                 onchange="mostrarCampos(this.value)">
                             <option value="">Seleccione método</option>
                             <option value="Efectivo">💵 Efectivo</option>
@@ -105,15 +120,16 @@
                         </select>
                     </div>
 
+                    <!-- Campos dinámicos de pago -->
                     <div id="campo-banco" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Banco</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Banco</label>
                         <input type="text" name="banco" id="inp_banco" placeholder="Ej: Bancolombia"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm" />
                     </div>
 
                     <div id="campo-cuotas" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de cuotas</label>
-                        <select name="cuotas" id="inp_cuotas" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Número de cuotas</label>
+                        <select name="cuotas" id="inp_cuotas" class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm">
                             <option value="6">6 cuotas</option>
                             <option value="12">12 cuotas</option>
                             <option value="24">24 cuotas</option>
@@ -124,102 +140,128 @@
                     </div>
 
                     <div id="campo-tarjeta-numero" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de tarjeta</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Número de tarjeta</label>
                         <input type="text" name="tarjeta_numero" id="inp_tarjeta_num"
                                placeholder="1234 5678 9012 3456" maxlength="19"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm font-mono"
                                oninput="formatearTarjeta(this)" />
                     </div>
 
                     <div id="campo-tarjeta-nombre" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre en la tarjeta</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre en la tarjeta</label>
                         <input type="text" name="tarjeta_nombre" id="inp_tarjeta_nom"
-                               placeholder="Ej: CAMILO PARDO"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               placeholder="Ej: CAMILO VALBUENA"
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm uppercase" />
                     </div>
 
                     <div id="campo-tarjeta-venc" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de vencimiento</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha de vencimiento</label>
                         <input type="text" name="tarjeta_vencimiento" id="inp_tarjeta_venc"
                                placeholder="MM/AA" maxlength="5"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm text-center"
                                oninput="formatearVencimiento(this)" />
                     </div>
 
                     <div id="campo-tarjeta-cvv" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">CVV</label>
                         <input type="password" name="tarjeta_cvv" id="inp_tarjeta_cvv"
                                placeholder="***" maxlength="4"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm text-center" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono de contacto</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Teléfono de contacto</label>
                         <input type="tel" name="telefono" id="inp_tel" required placeholder="Ej: 3001234567"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Dirección de entrega</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Dirección de entrega</label>
                         <input type="text" name="direccion" id="inp_dir" required placeholder="Ej: Calle 123 # 45-67"
-                               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                               class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm" />
                     </div>
 
                 </div>
 
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones adicionales</label>
+                <div class="mt-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Observaciones adicionales</label>
                     <textarea name="observaciones" id="inp_obs" rows="3"
                               placeholder="Accesorios adicionales, preferencias especiales..."
-                              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                              class="w-full border border-gray-300 bg-gray-50 rounded-lg px-4 py-2.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"></textarea>
                 </div>
 
-                <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
-                    <h4 class="font-bold text-gray-700 mb-2">📄 Resumen</h4>
-                    <p class="text-sm text-gray-600">Vehículo: <strong>{{ $vehiculo['nombre'] }}</strong></p>
-                    <p class="text-sm text-gray-600">Precio: <strong class="text-green-700">${{ number_format($vehiculo['precio']) }} COP</strong></p>
-                    <p class="text-sm text-gray-600">Tipo: <strong>{{ ucfirst($tipo) }}</strong></p>
+                <!-- Resumen -->
+                <div class="mt-8 p-5 bg-blue-50/50 rounded-xl border border-blue-100 shadow-sm">
+                    <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Resumen de la Orden
+                    </h4>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <p class="text-gray-600">Vehículo:</p> <p class="font-semibold text-gray-900 text-right">{{ $vehiculo['nombre'] }}</p>
+                        <p class="text-gray-600">Tipo:</p> <p class="font-semibold text-gray-900 text-right">{{ ucfirst($tipo) }}</p>
+                        <p class="text-gray-600">Total a pagar:</p> <p class="font-bold text-green-700 text-right text-lg">${{ number_format($vehiculo['precio']) }} COP</p>
+                    </div>
                 </div>
 
-                <div class="mt-6 border rounded-lg p-4 bg-gray-50">
-                    <h4 class="font-bold text-gray-700 mb-2">✍️ Firma del Comprador</h4>
-                    <p class="text-sm text-gray-500 mb-2">Firme en el recuadro con el mouse o dedo</p>
-                    <canvas id="firmaCanvas" width="600" height="150"
-                            class="border border-gray-400 rounded bg-white w-full cursor-crosshair"></canvas>
+                <!-- Firma -->
+                <div class="mt-8 border border-gray-200 rounded-xl p-5 bg-gray-50 shadow-sm">
+                    <h4 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        ✍️ Firma del Comprador
+                    </h4>
+                    <p class="text-sm text-gray-500 mb-3">Firme en el recuadro inferior con el mouse o su dedo.</p>
+                    <div class="bg-white p-1 border border-gray-300 rounded-lg shadow-inner">
+                        <canvas id="firmaCanvas" width="600" height="150"
+                                class="w-full cursor-crosshair rounded"></canvas>
+                    </div>
                     <input type="hidden" name="firma_comprador" id="firma_comprador" />
-                    <div class="mt-2">
+                    <div class="mt-3 flex justify-end">
                         <button type="button" onclick="limpiarFirma()"
-                                class="bg-white hover:bg-gray-100 text-black border border-gray-300 px-4 py-1 rounded text-sm shadow">
+                                class="bg-white hover:bg-gray-100 text-gray-700 font-medium border border-gray-300 px-4 py-1.5 rounded-lg text-sm shadow-sm transition-colors flex items-center gap-1">
                             🗑️ Limpiar firma
                         </button>
                     </div>
                 </div>
 
-                <div class="mt-6 grid grid-cols-2 gap-6 text-center text-sm text-gray-600 border-t pt-4">
-                    <div>
-                        <div class="border-b border-black mb-1 h-8"></div>
-                        <p><strong>CONCESIONARIO</strong></p>
+                <!-- Firma Centrada -->
+                <div class="mt-8 flex justify-center text-center text-sm text-gray-600 border-t border-gray-200 pt-6">
+                    <div class="w-64">
+                        <div class="border-b-2 border-gray-800 mb-2 h-8 mx-4"></div>
+                        <p class="font-bold text-gray-900">CONCESIONARIO</p>
                         <p>Motrix S.A.S.</p>
-                    </div>
-                    <div>
-                        <div class="border-b border-black mb-1 h-8"></div>
-                        <p><strong>COMPRADOR</strong></p>
-                        <p>Firma y Huella</p>
                     </div>
                 </div>
 
-                <div class="mt-6 flex flex-wrap gap-3">
-                    <button type="button" onclick="confirmarCompra()"
-                            class="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-3 rounded-lg shadow-md border border-gray-300 transition-all">
+                <div class="mt-10 flex flex-wrap gap-4 justify-center md:justify-start">
+                    <button type="button" onclick="intentarConfirmar()"
+                            class="bg-black hover:bg-gray-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
                         ✅ Confirmar Compra
                     </button>
                     <a href="{{ url()->previous() }}"
-                       class="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-3 rounded-lg shadow-md border border-gray-300 transition-all">
+                       class="bg-white hover:bg-gray-50 text-gray-700 font-semibold px-8 py-3.5 rounded-xl shadow-md border border-gray-300 transition-colors flex items-center gap-2">
                         ❌ Cancelar
                     </a>
                 </div>
 
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="modalConfirmacion" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div id="modalContenido" class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full mx-4 text-center transform transition-transform duration-300 scale-95">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">¿Confirmar compra?</h3>
+            <p class="text-sm text-gray-600 mb-6">Estás a punto de registrar la compra de <strong>{{ $vehiculo['nombre'] }}</strong> por un total de <strong>${{ number_format($vehiculo['precio']) }} COP</strong>.</p>
+            <div class="flex flex-col gap-3">
+                <button type="button" onclick="ejecutarCompra()" class="w-full px-4 py-3 bg-black text-white hover:bg-gray-800 rounded-xl font-bold shadow-md transition-all hover:shadow-lg">
+                    Sí, realizar compra
+                </button>
+                <button type="button" onclick="cerrarModal()" class="w-full px-4 py-3 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition-colors">
+                    Revisar de nuevo
+                </button>
+            </div>
         </div>
     </div>
 
@@ -229,6 +271,63 @@
         document.getElementById('fecha-hoy').textContent = hoy;
         document.getElementById('fecha-tabla').textContent = hoy;
 
+        // Lógica de Swatches de Color
+        function seleccionarColor(color, btnElement) {
+            // Actualizar select oculto
+            document.getElementById('inp_color').value = color;
+            
+            // Efecto visual en los botones
+            const swatches = document.querySelectorAll('.color-swatch');
+            swatches.forEach(el => el.classList.remove('ring-4', 'ring-blue-400', 'scale-110'));
+            
+            btnElement.classList.add('ring-4', 'ring-blue-400', 'scale-110');
+        }
+
+        // Lógica Modal de Confirmación
+        function intentarConfirmar() {
+            const form = document.getElementById('formCompra');
+            
+            // Validar HTML5 nativo antes de mostrar el modal
+            if (form.reportValidity()) {
+                // Guardar firma temporalmente
+                document.getElementById('firma_comprador').value = canvas.toDataURL('image/png');
+                
+                // Mostrar Modal
+                const modal = document.getElementById('modalConfirmacion');
+                const contenido = document.getElementById('modalContenido');
+                
+                modal.classList.remove('hidden');
+                // Timeout para permitir la transición de opacidad y escala
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.classList.add('opacity-100');
+                    contenido.classList.remove('scale-95');
+                    contenido.classList.add('scale-100');
+                }, 10);
+            }
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('modalConfirmacion');
+            const contenido = document.getElementById('modalContenido');
+            
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            contenido.classList.remove('scale-100');
+            contenido.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function ejecutarCompra() {
+            // Asegurar que la firma esté actualizada antes de enviar
+            document.getElementById('firma_comprador').value = canvas.toDataURL('image/png');
+            document.getElementById('formCompra').submit();
+        }
+
+        // Lógica existente de campos dinámicos
         function mostrarCampos(valor) {
             document.getElementById('campo-banco').classList.toggle('hidden', valor !== 'Transferencia');
             document.getElementById('campo-cuotas').classList.toggle('hidden', valor !== 'Cuotas');
@@ -250,6 +349,7 @@
             input.value = val;
         }
 
+        // Lógica existente de PDF/CSV
         function getDatos() {
             return {
                 vehiculo:  '{{ $vehiculo['nombre'] }}',
@@ -319,6 +419,7 @@
             a.click(); URL.revokeObjectURL(url);
         }
 
+        // Lógica existente de Firma
         const canvas = document.getElementById('firmaCanvas');
         const ctx    = canvas.getContext('2d');
         let firmando = false;
@@ -341,10 +442,6 @@
         function limpiarFirma() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             document.getElementById('firma_comprador').value = '';
-        }
-        function confirmarCompra() {
-            document.getElementById('firma_comprador').value = canvas.toDataURL('image/png');
-            document.getElementById('formCompra').submit();
         }
     </script>
 
