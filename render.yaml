@@ -1,14 +1,14 @@
 services:
   - type: web
     name: motrix-python-service
-    runtime: python
+    env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     plan: free
 
   - type: web
     name: motrix-laravel-app
-    runtime: php
+    env: php
     plan: free
     buildCommand: composer install --no-dev --optimize-autoloader
     startCommand: php artisan migrate --force && apache2-foreground
