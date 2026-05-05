@@ -104,3 +104,8 @@ Route::get('/test-db', function () {
         return "Error: " . $e->getMessage();
     }
 });
+Route::get('/reset-pass', function () {
+    \App\Models\User::where('email', 'juancamilovalbuena3@gmail.com')
+        ->update(['password' => bcrypt('12345678')]);
+    return 'Contraseña actualizada';
+});
