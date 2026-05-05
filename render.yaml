@@ -5,18 +5,42 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+    healthCheckPath: /
 
   - type: web
     name: motrix-laravel-app
-    env: php
+    env: docker
     plan: free
-    buildCommand: composer install --no-dev --optimize-autoloader
-    startCommand: php artisan migrate --force && apache2-foreground
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
     envVars:
-      - key: APP_KIND
-        value: laravel
+      - key: APP_NAME
+        value: Motrix
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          type: web
+          name: motrix-laravel-app
+          property: host
       - key: PYTHON_SERVICE_URL
         fromService:
           type: web
           name: motrix-python-api
           property: host
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/database/database.sqlite
+      - key: CACHE_DRIVER
+        value: file
+      - key: SESSION_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
