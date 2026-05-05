@@ -5,9 +5,7 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan migrate --force
-
-# Mostrar logs de Laravel en stdout
-touch /var/www/html/storage/logs/laravel.log
-tail -f /var/www/html/storage/logs/laravel.log &
+php artisan session:table 2>/dev/null || true
+php artisan migrate --force
 
 apache2-foreground
