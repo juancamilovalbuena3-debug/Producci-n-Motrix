@@ -3,17 +3,37 @@ services:
     name: motrix-python-api
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    buildCommand: pip install -r microservicio/requirements.txt
+    startCommand: python microservicio/main.py
     healthCheckPath: /productos
+
+  - type: web
+    name: motrix-laravel-app
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
     envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: mysql
       - key: DB_HOST
-        value: TU_HOST_MYSQL_EXTERNO
+        value: sql10.freesqldatabase.com
       - key: DB_PORT
         value: 3306
-      - key: DB_USER
-        value: TU_USUARIO
+      - key: DB_DATABASE
+        value: sql10825508
+      - key: DB_USERNAME
+        value: sql10825508
       - key: DB_PASSWORD
-        value: TU_PASSWORD
-      - key: DB_NAME
-        value: TU_DB
+        value: TU_PASSWORD_AQUI
+      - key: PYTHON_SERVICE_URL
+        fromService:
+          type: web
+          name: motrix-python-api
+          property: host
