@@ -94,3 +94,13 @@ Route::middleware([
     Route::get('/success', function () { return "Pago exitoso"; })->name('success');
     Route::get('/cancel', function () { return "Pago cancelado"; })->name('cancel');
 });
+
+Route::get('/test-db', function () {
+    try {
+        DB::connection()->getPdo();
+        $count = DB::table('users')->count();
+        return "BD conectada OK - Usuarios: $count";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
