@@ -31,7 +31,7 @@ services:
       - key: DB_USERNAME
         value: sql10825508
       - key: DB_PASSWORD
-        value: TU_PASSWORD_AQUI
+        value: ZvBFkKczdJ
       - key: PYTHON_SERVICE_URL
         fromService:
           type: web
