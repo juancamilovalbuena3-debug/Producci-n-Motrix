@@ -3,7 +3,7 @@ services:
     name: motrix-python-api
     env: python
     plan: free
-    buildCommand: pip install -r microservicio/requirements.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: python microservicio/main.py
     healthCheckPath: /productos
 
