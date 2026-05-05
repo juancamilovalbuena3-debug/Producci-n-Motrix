@@ -2,6 +2,7 @@ from aiohttp import web
 import json
 import aiomysql
 import re
+import os
 from datetime import datetime
 
 carros = {
@@ -35,8 +36,12 @@ async def cors_middleware(request, handler):
 # ── DB Pool ────────────────────────────────────────────
 async def get_pool(app):
     app['db'] = await aiomysql.create_pool(
-        host='127.0.0.1', port=3306,
-        user='root', password='', db='hr', autocommit=True
+        host=os.environ.get('DB_HOST', '127.0.0.1'),
+        port=int(os.environ.get('DB_PORT', 3306)),
+        user=os.environ.get('DB_USER', 'root'),
+        password=os.environ.get('DB_PASSWORD', ''),
+        db=os.environ.get('DB_NAME', 'hr'),
+        autocommit=True
     )
     async with app['db'].acquire() as conn:
         async with conn.cursor() as cur:
@@ -53,7 +58,6 @@ async def get_pool(app):
                 )
             """)
 
-            # ── Tabla para persistir el catálogo de carros y motos ──
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS catalogo_vehiculos_python (
                     id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -65,7 +69,6 @@ async def get_pool(app):
                 )
             """)
 
-    # Al arrancar, restauramos el catálogo desde BD (si existe data guardada)
     await restaurar_catalogo(app)
 
 async def close_pool(app):
@@ -74,10 +77,8 @@ async def close_pool(app):
 
 # ── Persistencia del catálogo ──────────────────────────
 async def guardar_catalogo(app):
-    """Guarda el estado actual de carros y motos en la BD."""
     async with app['db'].acquire() as conn:
         async with conn.cursor() as cur:
-            # Guardamos carros
             for id_v, datos in carros.items():
                 await cur.execute("""
                     INSERT INTO catalogo_vehiculos_python (tipo, id_vehiculo, datos)
@@ -85,7 +86,6 @@ async def guardar_catalogo(app):
                     ON DUPLICATE KEY UPDATE datos = VALUES(datos), updated_at = CURRENT_TIMESTAMP
                 """, ('carro', id_v, json.dumps(datos, ensure_ascii=False)))
 
-            # Eliminamos carros que ya no existen en memoria
             if carros:
                 ids_carros = ','.join(str(k) for k in carros.keys())
                 await cur.execute(
@@ -94,7 +94,6 @@ async def guardar_catalogo(app):
             else:
                 await cur.execute("DELETE FROM catalogo_vehiculos_python WHERE tipo='carro'")
 
-            # Guardamos motos
             for id_v, datos in motos.items():
                 await cur.execute("""
                     INSERT INTO catalogo_vehiculos_python (tipo, id_vehiculo, datos)
@@ -102,7 +101,6 @@ async def guardar_catalogo(app):
                     ON DUPLICATE KEY UPDATE datos = VALUES(datos), updated_at = CURRENT_TIMESTAMP
                 """, ('moto', id_v, json.dumps(datos, ensure_ascii=False)))
 
-            # Eliminamos motos que ya no existen en memoria
             if motos:
                 ids_motos = ','.join(str(k) for k in motos.keys())
                 await cur.execute(
@@ -112,15 +110,12 @@ async def guardar_catalogo(app):
                 await cur.execute("DELETE FROM catalogo_vehiculos_python WHERE tipo='moto'")
 
 async def restaurar_catalogo(app):
-    """Al iniciar, carga desde BD el catálogo guardado (si existe)."""
     async with app['db'].acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("SELECT tipo, id_vehiculo, datos FROM catalogo_vehiculos_python ORDER BY tipo, id_vehiculo")
             rows = await cur.fetchall()
 
     if not rows:
-        # No hay datos guardados, dejamos los valores por defecto en memoria
-        # Pero guardamos los datos por defecto en BD para la próxima vez
         await guardar_catalogo(app)
         return
 
@@ -144,10 +139,6 @@ async def restaurar_catalogo(app):
 
 # ── Logout ─────────────────────────────────────────────
 async def logout(request):
-    """
-    Llamar este endpoint al cerrar sesión desde Laravel/Frontend.
-    Persiste el catálogo de carros y motos en la BD.
-    """
     try:
         await guardar_catalogo(request.app)
         return web.Response(
@@ -230,8 +221,6 @@ async def crear_producto(request):
     }
 
     carros[nuevo_id] = nuevo_carro
-    
-    # ✅ Guardamos automáticamente después de crear
     await guardar_catalogo(request.app)
 
     return web.Response(
@@ -257,10 +246,8 @@ async def eliminar_producto(request):
         )
 
     del carros[carro_key]
-    
-    # ✅ Guardamos automáticamente después de eliminar
     await guardar_catalogo(request.app)
-    
+
     return web.Response(
         text=json.dumps({"mensaje": "Carro eliminado correctamente"}),
         content_type='application/json'
@@ -335,8 +322,6 @@ async def crear_moto(request):
     }
 
     motos[nuevo_id] = nueva_moto
-    
-    # ✅ Guardamos automáticamente después de crear
     await guardar_catalogo(request.app)
 
     return web.Response(
@@ -362,10 +347,8 @@ async def eliminar_moto(request):
         )
 
     del motos[moto_key]
-    
-    # ✅ Guardamos automáticamente después de eliminar
     await guardar_catalogo(request.app)
-    
+
     return web.Response(
         text=json.dumps({"mensaje": "Moto eliminada correctamente"}),
         content_type='application/json'
@@ -848,8 +831,6 @@ app.router.add_post('/validar/empleado',           validar_empleado)
 app.router.add_options('/validar/empleado',        validar_empleado)
 app.router.add_post('/validar/vehiculo',           validar_vehiculo)
 app.router.add_options('/validar/vehiculo',        validar_vehiculo)
-
-# ── Ruta de Logout (guarda catálogo en BD) ─────────────
 app.router.add_post('/logout',                     logout)
 app.router.add_options('/logout',                  logout)
 
@@ -857,5 +838,6 @@ app.on_startup.append(get_pool)
 app.on_cleanup.append(close_pool)
 
 if __name__ == '__main__':
-    print("Microservicio Python corriendo en http://0.0.0.0:8080")
-    web.run_app(app, host='0.0.0.0', port=8080)
+    port = int(os.environ.get('PORT', 8080))
+    print(f"Microservicio Python corriendo en http://0.0.0.0:{port}")
+    web.run_app(app, host='0.0.0.0', port=port)
