@@ -11,22 +11,19 @@ use Illuminate\Support\Facades\Http;
 
 class EmpleadoController extends Controller
 {
-    /**
-     * URL base del microservicio Python
-     */
-    private string $microservicio = 'http://localhost:8080';
+    private string $microservicio;
 
-    /**
-     * Muestra la lista de empleados y vehículos
-     */
+    public function __construct()
+    {
+        $this->microservicio = env('PYTHON_MICROSERVICE_URL', 'https://motrix-python-api.onrender.com');
+    }
+
     public function index(Request $request)
     {
-        // === Empleados ===
         $queryEmpleados = Empleado::query();
 
         if ($request->filled('busqueda')) {
             $busqueda = trim($request->busqueda);
-
             $queryEmpleados->where(function ($q) use ($busqueda) {
                 $q->where('nombre', 'like', '%' . strtolower($busqueda) . '%')
                   ->orWhere('email', 'like', '%' . strtolower($busqueda) . '%');
@@ -35,7 +32,6 @@ class EmpleadoController extends Controller
 
         $empleados = $queryEmpleados->paginate(10)->withQueryString();
 
-        // === Vehículos con filtros ===
         $queryVehiculos = Vehiculo::query();
 
         if ($request->filled('busqueda')) {
@@ -55,22 +51,15 @@ class EmpleadoController extends Controller
         return view('empleados.index', compact('empleados', 'vehiculos'));
     }
 
-    /**
-     * Mostrar formulario para crear un nuevo empleado
-     */
     public function create()
     {
         return view('empleados.create');
     }
 
-    /**
-     * Guarda un nuevo empleado
-     */
     public function store(Request $request)
     {
-        // ── Validación vía microservicio Python ──────────────
         try {
-            $respuesta = Http::timeout(5)->post("{$this->microservicio}/validar/empleado", [
+            $respuesta = Http::timeout(10)->post("{$this->microservicio}/validar/empleado", [
                 'nombre'  => $request->nombre,
                 'puesto'  => $request->puesto,
                 'salario' => $request->salario,
@@ -85,7 +74,6 @@ class EmpleadoController extends Controller
                     ->withInput();
             }
         } catch (\Exception $e) {
-            // Si el microservicio no responde, usamos validación local de respaldo
             $validated = $request->validate([
                 'nombre'  => 'required|string|max:255',
                 'puesto'  => 'required|string|max:255',
@@ -107,11 +95,8 @@ class EmpleadoController extends Controller
             ]);
 
             Empleado::create($validated);
-
-            return redirect()->route('empleados.create')
-                             ->with('success', 'Empleado creado correctamente.');
+            return redirect()->route('empleados.create')->with('success', 'Empleado creado correctamente.');
         }
-        // ────────────────────────────────────────────────────
 
         Empleado::create([
             'nombre'  => $request->nombre,
@@ -120,29 +105,21 @@ class EmpleadoController extends Controller
             'email'   => $request->email,
         ]);
 
-        return redirect()->route('empleados.create')
-                         ->with('success', 'Empleado creado correctamente.');
+        return redirect()->route('empleados.create')->with('success', 'Empleado creado correctamente.');
     }
 
-    /**
-     * Editar empleado
-     */
     public function edit($id)
     {
         $empleado = Empleado::findOrFail($id);
         return view('empleados.edit', compact('empleado'));
     }
 
-    /**
-     * Actualizar empleado
-     */
     public function update(Request $request, $id)
     {
         $empleado = Empleado::findOrFail($id);
 
-        // ── Validación vía microservicio Python ──────────────
         try {
-            $respuesta = Http::timeout(5)->post("{$this->microservicio}/validar/empleado", [
+            $respuesta = Http::timeout(10)->post("{$this->microservicio}/validar/empleado", [
                 'id'      => $empleado->id,
                 'nombre'  => $request->nombre,
                 'puesto'  => $request->puesto,
@@ -158,7 +135,6 @@ class EmpleadoController extends Controller
                     ->withInput();
             }
         } catch (\Exception $e) {
-            // Si el microservicio no responde, validación local de respaldo
             $validated = $request->validate([
                 'nombre'  => 'required|string|max:255',
                 'puesto'  => 'required|string|max:255',
@@ -180,11 +156,8 @@ class EmpleadoController extends Controller
             ]);
 
             $empleado->update($validated);
-
-            return redirect()->route('empleados.index')
-                             ->with('success', 'Empleado actualizado correctamente.');
+            return redirect()->route('empleados.index')->with('success', 'Empleado actualizado correctamente.');
         }
-        // ────────────────────────────────────────────────────
 
         $empleado->update([
             'nombre'  => $request->nombre,
@@ -193,32 +166,22 @@ class EmpleadoController extends Controller
             'email'   => $request->email,
         ]);
 
-        return redirect()->route('empleados.index')
-                         ->with('success', 'Empleado actualizado correctamente.');
+        return redirect()->route('empleados.index')->with('success', 'Empleado actualizado correctamente.');
     }
 
-    /**
-     * Eliminar empleado
-     */
     public function destroy($id)
     {
         $empleado = Empleado::findOrFail($id);
         $empleado->delete();
-
-        return redirect()->route('empleados.index')
-                         ->with('success', 'Empleado eliminado correctamente.');
+        return redirect()->route('empleados.index')->with('success', 'Empleado eliminado correctamente.');
     }
 
-    /**
-     * Exportar empleados en PDF (respetando filtros)
-     */
     public function exportPdf(Request $request)
     {
         $query = Empleado::query();
 
         if ($request->filled('busqueda')) {
             $busqueda = trim($request->busqueda);
-
             $query->where(function ($q) use ($busqueda) {
                 $q->where('nombre', 'like', '%' . strtolower($busqueda) . '%')
                   ->orWhere('email', 'like', '%' . strtolower($busqueda) . '%');
@@ -235,16 +198,12 @@ class EmpleadoController extends Controller
         return $pdf->download($filename);
     }
 
-    /**
-     * Exportar empleados en CSV (respetando filtros)
-     */
     public function exportCsv(Request $request)
     {
         $query = Empleado::query();
 
         if ($request->filled('busqueda')) {
             $busqueda = trim($request->busqueda);
-
             $query->where(function ($q) use ($busqueda) {
                 $q->where('nombre', 'like', '%' . strtolower($busqueda) . '%')
                   ->orWhere('email', 'like', '%' . strtolower($busqueda) . '%');
@@ -256,7 +215,6 @@ class EmpleadoController extends Controller
         $response = new StreamedResponse(function () use ($empleados) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['ID', 'Nombre', 'Puesto', 'Salario', 'Email']);
-
             foreach ($empleados as $empleado) {
                 fputcsv($handle, [
                     $empleado->id,
@@ -266,7 +224,6 @@ class EmpleadoController extends Controller
                     $empleado->email,
                 ]);
             }
-
             fclose($handle);
         });
 
