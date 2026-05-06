@@ -16,13 +16,13 @@ class VehiculoController extends Controller
 
     public function __construct()
     {
-        $this->pythonUrl = env('PYTHON_MICROSERVICE_URL', 'http://127.0.0.1:8080');
+        $this->pythonUrl = env('PYTHON_MICROSERVICE_URL', 'https://motrix-python-api.onrender.com');
     }
 
     public function carros()
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/productos");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/productos");
             $carros = $response->json();
         } catch (\Exception $e) {
             $carros = [];
@@ -33,7 +33,7 @@ class VehiculoController extends Controller
     public function motos()
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/motos");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/motos");
             $motos = $response->json();
         } catch (\Exception $e) {
             $motos = [];
@@ -44,7 +44,7 @@ class VehiculoController extends Controller
     public function verDetalleCarro($id)
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/producto/{$id}");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/producto/{$id}");
             $producto = $response->json();
         } catch (\Exception $e) {
             $producto = null;
@@ -58,7 +58,7 @@ class VehiculoController extends Controller
     public function verDetalleMoto($id)
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/moto/{$id}");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/moto/{$id}");
             $moto = $response->json();
         } catch (\Exception $e) {
             $moto = null;
@@ -72,7 +72,7 @@ class VehiculoController extends Controller
     public function formComprarCarro($id)
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/producto/{$id}");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/producto/{$id}");
             $vehiculo = $response->json();
         } catch (\Exception $e) {
             return redirect()->route('carros')->with('error', 'No se pudo conectar con el microservicio.');
@@ -88,7 +88,7 @@ class VehiculoController extends Controller
     public function formComprarMoto($id)
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/moto/{$id}");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/moto/{$id}");
             $vehiculo = $response->json();
         } catch (\Exception $e) {
             return redirect()->route('motos')->with('error', 'No se pudo conectar con el microservicio.');
@@ -113,7 +113,7 @@ class VehiculoController extends Controller
         ]);
 
         try {
-            $response  = Http::timeout(5)->post("{$this->pythonUrl}/comprar/{$id}");
+            $response  = Http::timeout(10)->post("{$this->pythonUrl}/comprar/{$id}");
             $resultado = $response->json();
         } catch (\Exception $e) {
             return redirect()->route('carros')->with('error', 'No se pudo conectar con el microservicio Python.');
@@ -160,7 +160,7 @@ class VehiculoController extends Controller
         ]);
 
         try {
-            $response  = Http::timeout(5)->post("{$this->pythonUrl}/comprar-moto/{$id}");
+            $response  = Http::timeout(10)->post("{$this->pythonUrl}/comprar-moto/{$id}");
             $resultado = $response->json();
         } catch (\Exception $e) {
             return redirect()->route('motos')->with('error', 'No se pudo conectar con el microservicio Python.');
@@ -198,7 +198,7 @@ class VehiculoController extends Controller
     public function reportes()
     {
         try {
-            $response = Http::timeout(5)->get("{$this->pythonUrl}/reporte");
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/reporte");
             $reporte  = $response->json();
             $error    = null;
         } catch (\Exception $e) {
@@ -222,7 +222,7 @@ class VehiculoController extends Controller
         $compra->delete();
 
         try {
-            Http::timeout(5)->delete("{$this->pythonUrl}/compras/{$id}");
+            Http::timeout(10)->delete("{$this->pythonUrl}/compras/{$id}");
         } catch (\Exception $e) {
             // Si Python falla, igual redirige con éxito parcial
         }
@@ -238,7 +238,7 @@ class VehiculoController extends Controller
     public function store(Request $request)
     {
         try {
-            $respuesta = Http::timeout(5)->post("{$this->pythonUrl}/validar/vehiculo", [
+            $respuesta = Http::timeout(10)->post("{$this->pythonUrl}/validar/vehiculo", [
                 'tipo'        => $request->tipo,
                 'marca'       => $request->marca,
                 'modelo'      => $request->modelo,
@@ -294,7 +294,7 @@ class VehiculoController extends Controller
                 'id_laravel'  => $vehiculo->id,
             ];
 
-            Http::timeout(5)->post("{$this->pythonUrl}{$endpoint}", $payload);
+            Http::timeout(10)->post("{$this->pythonUrl}{$endpoint}", $payload);
         } catch (\Exception $e) {
             // Si Python falla, el vehículo igual queda en BD Laravel
         }
@@ -314,7 +314,7 @@ class VehiculoController extends Controller
         $vehiculo = Vehiculo::findOrFail($id);
 
         try {
-            $respuesta = Http::timeout(5)->post("{$this->pythonUrl}/validar/vehiculo", [
+            $respuesta = Http::timeout(10)->post("{$this->pythonUrl}/validar/vehiculo", [
                 'tipo'        => $request->tipo,
                 'marca'       => $request->marca,
                 'modelo'      => $request->modelo,
@@ -369,7 +369,7 @@ class VehiculoController extends Controller
         try {
             $tipo     = strtolower($vehiculo->tipo);
             $endpoint = ($tipo === 'moto') ? '/motos/eliminar' : '/productos/eliminar';
-            Http::timeout(5)->delete("{$this->pythonUrl}{$endpoint}/{$id}");
+            Http::timeout(10)->delete("{$this->pythonUrl}{$endpoint}/{$id}");
         } catch (\Exception $e) {
             // Si Python falla, igual eliminamos de Laravel
         }
@@ -392,8 +392,7 @@ class VehiculoController extends Controller
             if ($request->filled('busqueda')) $params['busqueda'] = $request->busqueda;
             if ($request->filled('tipo'))     $params['tipo']     = $request->tipo;
 
-            $url      = 'http://127.0.0.1:8080/vehiculos/export/pdf';
-            $response = Http::timeout(10)->get($url, $params);
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/vehiculos/export/pdf", $params);
 
             if ($response->failed()) {
                 return back()->with('error', 'Error al generar el PDF desde el microservicio.');
@@ -416,8 +415,7 @@ class VehiculoController extends Controller
             if ($request->filled('busqueda')) $params['busqueda'] = $request->busqueda;
             if ($request->filled('tipo'))     $params['tipo']     = $request->tipo;
 
-            $url      = 'http://127.0.0.1:8080/vehiculos/export/csv';
-            $response = Http::timeout(10)->get($url, $params);
+            $response = Http::timeout(10)->get("{$this->pythonUrl}/vehiculos/export/csv", $params);
 
             if ($response->failed()) {
                 return back()->with('error', 'Error al generar el CSV desde el microservicio.');
